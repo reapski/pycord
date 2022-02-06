@@ -282,7 +282,7 @@ class ApplicationCommandMixin:
                 if type(to_check[check]) == list:
                     for opt in to_check[check]:
 
-                        cmd_vals = [val.get(opt, MISSING) for val in as_dict[check] if check in as_dict]
+                        cmd_vals = [val.get(opt, MISSING) for val in as_dict[check]] if check in as_dict else []
                         for i, val in enumerate(cmd_vals):
                             # We need to do some falsy conversion here
                             # The API considers False (autocomplete) and [] (choices) to be falsy values
@@ -576,7 +576,7 @@ class ApplicationCommandMixin:
             guild_permissions: List = []
 
             for i in commands:
-                cmd = find(lambda cmd: cmd.name == i["name"] and str(cmd.type) == str(i["type"]) and cmd.guild_ids is not None
+                cmd = find(lambda cmd: cmd.name == i["name"] and cmd.type == i["type"] and cmd.guild_ids is not None
                                        and int(i["guild_id"]) in cmd.guild_ids, self.pending_application_commands)
                 if not cmd:
                     # command has not been added yet

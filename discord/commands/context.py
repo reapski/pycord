@@ -24,7 +24,7 @@ DEALINGS IN THE SOFTWARE.
 """
 from __future__ import annotations
 
-from typing import TYPE_CHECKING, Optional, TypeVar, Union
+from typing import TYPE_CHECKING, Optional, TypeVar, Union, Dict, List
 
 import discord.abc
 from discord.interactions import InteractionMessage
@@ -99,15 +99,19 @@ class ApplicationContext(discord.abc.Messageable):
 
     async def invoke(self, command: ApplicationCommand[CogT, P, T], /, *args: P.args, **kwargs: P.kwargs) -> T:
         r"""|coro|
+
         Calls a command with the arguments given.
         This is useful if you want to just call the callback that a
         :class:`.ApplicationCommand` holds internally.
+
         .. note::
+
             This does not handle converters, checks, cooldowns, pre-invoke,
             or after-invoke hooks in any matter. It calls the internal callback
             directly as-if it was a regular function.
             You must take care in passing the proper arguments when
             using this function.
+
         Parameters
         -----------
         command: :class:`.ApplicationCommand`
@@ -159,7 +163,7 @@ class ApplicationContext(discord.abc.Messageable):
     def user(self) -> Optional[Union[Member, User]]:
         return self.interaction.user
 
-    author = user
+    author: Optional[Union[Member, User]] = user
 
     @property
     def voice_client(self) -> Optional[VoiceProtocol]:
@@ -171,6 +175,36 @@ class ApplicationContext(discord.abc.Messageable):
     @cached_property
     def response(self) -> InteractionResponse:
         return self.interaction.response
+
+    @property
+    def selected_options(self) -> Optional[List[Dict]]:
+        """The options and values that were selected by the user when sending the command.
+
+        Returns
+        -------
+        Optional[List[Dict]]
+            A dictionary containing the options and values that were selected by the user when the command was processed, if applicable.
+        """
+        if "options" in self.interaction.data:
+            return self.interaction.data["options"]
+        return None
+
+    @property
+    def unselected_options(self) -> Optional[List[Option]]:
+        """The options that were not provided by the user when sending the command.
+
+        Returns
+        -------
+        Optional[List[:class:`.Option`]]
+            A list of Option objects (if any) that were not selected by the user when the command was processed.
+        """
+        if self.command.options is not None:  # type: ignore
+            return [
+                option
+                for option in self.command.options  # type: ignore
+                if option.to_dict()["name"] not in [opt["name"] for opt in self.selected_options]
+            ]
+        return None
 
     @property
     def respond(self) -> Callable[..., Awaitable[Union[Interaction, WebhookMessage]]]:
