@@ -106,8 +106,7 @@ class GatewayRatelimiter:
 
     async def block(self):
         async with self.lock:
-            delta = self.get_delay()
-            if delta:
+            if delta := self.get_delay():
                 _log.warning(
                     "WebSocket in shard ID %s is ratelimited, waiting %.2f seconds",
                     self.shard_id,

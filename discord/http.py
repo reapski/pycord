@@ -498,8 +498,6 @@ class HTTPClient:
         stickers: Optional[List[sticker.StickerItem]] = None,
         components: Optional[List[components.Component]] = None,
     ) -> Response[message.Message]:
-        form = []
-
         payload: Dict[str, Any] = {"tts": tts}
         if content:
             payload["content"] = content
@@ -519,7 +517,7 @@ class HTTPClient:
             payload["sticker_ids"] = stickers
 
         attachments = []
-        form.append({"name": "payload_json"})
+        form = [{"name": "payload_json"}]
         for index, file in enumerate(files):
             attachments.append(
                 {
@@ -576,10 +574,8 @@ class HTTPClient:
         files: Sequence[File],
         **payload,
     ) -> Response[message.Message]:
-        form = []
-
         attachments = []
-        form.append({"name": "payload_json"})
+        form = [{"name": "payload_json"}]
         for index, file in enumerate(files):
             attachments.append(
                 {
@@ -1478,14 +1474,10 @@ class HTTPClient:
             }
         ]
 
-        for k, v in payload.items():
-            form.append(
-                {
+        form.extend({
                     "name": k,
                     "value": v,
-                }
-            )
-
+                } for k, v in payload.items())
         return self.request(
             Route("POST", "/guilds/{guild_id}/stickers", guild_id=guild_id),
             form=form,

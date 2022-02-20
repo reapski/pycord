@@ -430,6 +430,4 @@ class Asset(AssetMixin):
             The new updated asset.
         """
 
-        if self._animated:
-            return self
-        return self.with_format(format)
+        return self if self._animated else self.with_format(format)

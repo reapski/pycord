@@ -587,16 +587,12 @@ def handle_message_parameters(
                 }
             )
         else:
-            for index, file in enumerate(files):
-                multipart.append(
-                    {
+            multipart.extend({
                         "name": f"file{index}",
                         "value": file.fp,
                         "filename": file.filename,
                         "content_type": "application/octet-stream",
-                    }
-                )
-
+                    } for index, file in enumerate(files))
     return ExecuteWebhookParameters(payload=payload, multipart=multipart, files=files)
 
 

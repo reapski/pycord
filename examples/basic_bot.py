@@ -37,7 +37,7 @@ async def roll(ctx, dice: str):
         await ctx.send("Format has to be in NdN!")
         return
 
-    result = ", ".join(str(random.randint(1, limit)) for r in range(rolls))
+    result = ", ".join(str(random.randint(1, limit)) for _ in range(rolls))
     await ctx.send(result)
 
 

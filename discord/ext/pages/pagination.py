@@ -445,9 +445,7 @@ class Paginator(discord.ui.View):
         )
 
     async def interaction_check(self, interaction: discord.Interaction) -> bool:
-        if self.usercheck:
-            return self.user == interaction.user
-        return True
+        return self.user == interaction.user if self.usercheck else True
 
     def add_menu(self):
         """Adds the default :class:`PaginatorMenu` instance to the paginator."""

@@ -706,11 +706,10 @@ class ArchivedThreadIterator(_AsyncIterator["Thread"]):
                 self.before = str(time_snowflake(before, high=False))
             else:
                 self.before = before.isoformat()
+        elif joined:
+            self.before = str(before.id)
         else:
-            if joined:
-                self.before = str(before.id)
-            else:
-                self.before = snowflake_time(before.id).isoformat()
+            self.before = snowflake_time(before.id).isoformat()
 
         self.update_before: Callable[[ThreadPayload], str] = self.get_archive_timestamp
 

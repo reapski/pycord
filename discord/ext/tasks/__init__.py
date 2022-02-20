@@ -599,12 +599,9 @@ class Loop(Generic[LF]):
         time_now = (
             now if now is not MISSING else datetime.datetime.now(datetime.timezone.utc).replace(microsecond=0)
         ).timetz()
-        for idx, time in enumerate(self._time):
-            if time >= time_now:
-                self._time_index = idx
-                break
-        else:
-            self._time_index = 0
+        self._time_index = next(
+            (idx for idx, time in enumerate(self._time) if time >= time_now), 0
+        )
 
     def _get_time_parameter(
         self,
@@ -692,7 +689,11 @@ class Loop(Generic[LF]):
             self._time = self._get_time_parameter(time)
             self._sleep = self._seconds = self._minutes = self._hours = MISSING
 
-        if self.is_running() and not (self._before_loop_running or self._after_loop_running):
+        if (
+            self.is_running()
+            and not self._before_loop_running
+            and not self._after_loop_running
+        ):
             if self._time is not MISSING:
                 # prepare the next time index starting from after the last iteration
                 self._prepare_time_index(now=self._last_iteration)
