@@ -68,9 +68,7 @@ class flag_value:
         ...
 
     def __get__(self, instance: Optional[BF], owner: Type[BF]) -> Any:
-        if instance is None:
-            return self
-        return instance._has_flag(self.flag)
+        return self if instance is None else instance._has_flag(self.flag)
 
     def __set__(self, instance: BF, value: bool) -> None:
         instance._set_flag(self.flag, value)

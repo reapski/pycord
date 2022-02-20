@@ -22,6 +22,7 @@ LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING
 FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER
 DEALINGS IN THE SOFTWARE.
 """
+
 from __future__ import annotations
 
 import inspect
@@ -57,10 +58,7 @@ T = TypeVar("T")
 BotT = TypeVar("BotT", bound="Union[Bot, AutoShardedBot]")
 CogT = TypeVar("CogT", bound="Cog")
 
-if TYPE_CHECKING:
-    P = ParamSpec("P")
-else:
-    P = TypeVar("P")
+P = ParamSpec("P") if TYPE_CHECKING else TypeVar("P")
 
 
 class Context(discord.abc.Messageable, Generic[BotT]):
@@ -275,9 +273,7 @@ class Context(discord.abc.Messageable, Generic[BotT]):
     def cog(self) -> Optional[Cog]:
         """Optional[:class:`.Cog`]: Returns the cog associated with this context's command. None if it does not exist."""
 
-        if self.command is None:
-            return None
-        return self.command.cog
+        return None if self.command is None else self.command.cog
 
     @discord.utils.cached_property
     def guild(self) -> Optional[Guild]:
@@ -353,7 +349,7 @@ class Context(discord.abc.Messageable, Generic[BotT]):
 
         cmd = cmd.copy()
         cmd.context = self
-        if len(args) == 0:
+        if not args:
             await cmd.prepare_help_command(self, None)
             mapping = cmd.get_bot_mapping()
             injected = wrap_callback(cmd.send_bot_help)

@@ -23,6 +23,7 @@ FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER
 DEALINGS IN THE SOFTWARE.
 """
 
+
 from __future__ import annotations
 
 import asyncio
@@ -84,10 +85,7 @@ T = TypeVar("T")
 CogT = TypeVar("CogT", bound="Cog")
 Coro = TypeVar("Coro", bound=Callable[..., Coroutine[Any, Any, Any]])
 
-if TYPE_CHECKING:
-    P = ParamSpec("P")
-else:
-    P = TypeVar("P")
+P = ParamSpec("P") if TYPE_CHECKING else TypeVar("P")
 
 
 def wrap_callback(coro):
@@ -217,9 +215,7 @@ class ApplicationCommand(_BaseCommand, Generic[CogT, P, T]):
             bucket = self._buckets.get_bucket(ctx, current)  # type: ignore # ctx instead of non-existent message
 
             if bucket is not None:
-                retry_after = bucket.update_rate_limit(current)
-
-                if retry_after:
+                if retry_after := bucket.update_rate_limit(current):
                     from ..ext.commands.errors import CommandOnCooldown
 
                     raise CommandOnCooldown(bucket, retry_after, self._buckets.type)  # type: ignore
@@ -426,11 +422,7 @@ class ApplicationCommand(_BaseCommand, Generic[CogT, P, T]):
         # first, call the command local hook:
         cog = self.cog
         if self._before_invoke is not None:
-            # should be cog if @commands.before_invoke is used
-            instance = getattr(self._before_invoke, "__self__", cog)
-            # __self__ only exists for methods, not functions
-            # however, if @command.before_invoke is used, it will be a function
-            if instance:
+            if instance := getattr(self._before_invoke, "__self__", cog):
                 await self._before_invoke(instance, ctx)  # type: ignore
             else:
                 await self._before_invoke(ctx)  # type: ignore
@@ -449,8 +441,7 @@ class ApplicationCommand(_BaseCommand, Generic[CogT, P, T]):
     async def call_after_hooks(self, ctx: ApplicationContext) -> None:
         cog = self.cog
         if self._after_invoke is not None:
-            instance = getattr(self._after_invoke, "__self__", cog)
-            if instance:
+            if instance := getattr(self._after_invoke, "__self__", cog):
                 await self._after_invoke(instance, ctx)  # type: ignore
             else:
                 await self._after_invoke(ctx)  # type: ignore
@@ -493,9 +484,7 @@ class ApplicationCommand(_BaseCommand, Generic[CogT, P, T]):
         ``one two three``.
         """
 
-        parent = self.full_parent_name
-
-        if parent:
+        if parent := self.full_parent_name:
             return f"{parent} {self.name}"
         else:
             return self.name
@@ -682,7 +671,7 @@ class SlashCommand(ApplicationCommand):
             try:
                 p_name, p_obj = next(params)
             except StopIteration:  # not enough params for all the options
-                raise ClientException(f"Too many arguments passed to the options kwarg.")
+                raise ClientException('Too many arguments passed to the options kwarg.')
             p_obj = p_obj.annotation
 
             if not any(c(o, p_obj) for c in check_annotations):
@@ -1488,7 +1477,7 @@ def validate_chat_input_name(name: Any):
         )
     if not 1 <= len(name) <= 32:
         raise ValidationError(f"Chat input command names and options must be 1-32 characters long. Received {name}")
-    if not name.lower() == name:  # Can't use islower() as it fails if none of the chars can be lower. See #512.
+    if name.lower() != name:  # Can't use islower() as it fails if none of the chars can be lower. See #512.
         raise ValidationError(f"Chat input command names and options must be lowercase. Received {name}")
 
 

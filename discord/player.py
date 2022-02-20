@@ -22,6 +22,7 @@ LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING
 FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER
 DEALINGS IN THE SOFTWARE.
 """
+
 from __future__ import annotations
 
 import asyncio
@@ -74,10 +75,7 @@ __all__ = (
 
 CREATE_NO_WINDOW: int
 
-if sys.platform != "win32":
-    CREATE_NO_WINDOW = 0
-else:
-    CREATE_NO_WINDOW = 0x08000000
+CREATE_NO_WINDOW = 0 if sys.platform != "win32" else 0x08000000
 
 
 class AudioSource:
@@ -302,9 +300,20 @@ class FFmpegPCMAudio(FFmpegAudio):
         if isinstance(before_options, str):
             args.extend(shlex.split(before_options))
 
-        args.append("-i")
-        args.append("-" if pipe else source)
-        args.extend(("-f", "s16le", "-ar", "48000", "-ac", "2", "-loglevel", "warning"))
+        args.extend(
+            (
+                "-i",
+                "-" if pipe else source,
+                "-f",
+                "s16le",
+                "-ar",
+                "48000",
+                "-ac",
+                "2",
+                "-loglevel",
+                "warning",
+            )
+        )
 
         if isinstance(options, str):
             args.extend(shlex.split(options))
@@ -406,9 +415,7 @@ class FFmpegOpusAudio(FFmpegAudio):
         if isinstance(before_options, str):
             args.extend(shlex.split(before_options))
 
-        args.append("-i")
-        args.append("-" if pipe else source)
-
+        args.extend(("-i", "-" if pipe else source))
         codec = "copy" if codec in ("opus", "libopus") else "libopus"
 
         args.extend(
@@ -619,12 +626,10 @@ class FFmpegOpusAudio(FFmpegAudio):
         output = out.decode("utf8")
         codec = bitrate = None
 
-        codec_match = re.search(r"Stream #0.*?Audio: (\w+)", output)
-        if codec_match:
+        if codec_match := re.search(r"Stream #0.*?Audio: (\w+)", output):
             codec = codec_match.group(1)
 
-        br_match = re.search(r"(\d+) [kK]b/s", output)
-        if br_match:
+        if br_match := re.search(r"(\d+) [kK]b/s", output):
             bitrate = max(int(br_match.group(1)), 512)
 
         return codec, bitrate

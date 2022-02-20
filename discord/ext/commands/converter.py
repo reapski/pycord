@@ -364,14 +364,13 @@ class PartialMessageConverter(Converter[discord.PartialMessage]):
 
     @staticmethod
     def _resolve_channel(ctx, guild_id, channel_id) -> Optional[PartialMessageableChannel]:
-        if guild_id is not None:
-            guild = ctx.bot.get_guild(guild_id)
-            if guild is not None and channel_id is not None:
-                return guild._resolve_channel(channel_id)  # type: ignore
-            else:
-                return None
-        else:
+        if guild_id is None:
             return ctx.bot.get_channel(channel_id) if channel_id else ctx.channel
+        guild = ctx.bot.get_guild(guild_id)
+        if guild is not None and channel_id is not None:
+            return guild._resolve_channel(channel_id)  # type: ignore
+        else:
+            return None
 
     async def convert(self, ctx: Context, argument: str) -> discord.PartialMessage:
         guild_id, message_id, channel_id = self._get_id_matches(ctx, argument)
@@ -398,8 +397,7 @@ class MessageConverter(IDConverter[discord.Message]):
 
     async def convert(self, ctx: Context, argument: str) -> discord.Message:
         guild_id, message_id, channel_id = PartialMessageConverter._get_id_matches(ctx, argument)
-        message = ctx.bot._connection._get_message(message_id)
-        if message:
+        if message := ctx.bot._connection._get_message(message_id):
             return message
         channel = PartialMessageConverter._resolve_channel(ctx, guild_id, channel_id)
         if not channel:
@@ -666,7 +664,7 @@ class ColourConverter(Converter[discord.Colour]):
         if argument[0] == "#":
             return self.parse_hex_number(argument[1:])
 
-        if argument[0:2] == "0x":
+        if argument.startswith("0x"):
             rest = argument[2:]
             # Legacy backwards compatible syntax
             if rest.startswith("#"):
@@ -674,7 +672,7 @@ class ColourConverter(Converter[discord.Colour]):
             return self.parse_hex_number(rest)
 
         arg = argument.lower()
-        if arg[0:3] == "rgb":
+        if arg[:3] == "rgb":
             return self.parse_rgb(arg)
 
         arg = arg.replace(" ", "_")
@@ -708,8 +706,9 @@ class RoleConverter(IDConverter[discord.Role]):
         if not guild:
             raise NoPrivateMessage()
 
-        match = self._get_id_match(argument) or re.match(r"<@&([0-9]{15,20})>$", argument)
-        if match:
+        if match := self._get_id_match(argument) or re.match(
+            r"<@&([0-9]{15,20})>$", argument
+        ):
             result = guild.get_role(int(match.group(1)))
         else:
             result = discord.utils.get(guild._roles.values(), name=argument)
@@ -765,8 +764,8 @@ class GuildConverter(IDConverter[discord.Guild]):
         if result is None:
             result = discord.utils.get(ctx.bot.guilds, name=argument)
 
-            if result is None:
-                raise GuildNotFound(argument)
+        if result is None:
+            raise GuildNotFound(argument)
         return result
 
 
@@ -821,9 +820,9 @@ class PartialEmojiConverter(Converter[discord.PartialEmoji]):
     """
 
     async def convert(self, ctx: Context, argument: str) -> discord.PartialEmoji:
-        match = re.match(r"<(a?):([a-zA-Z0-9\_]{1,32}):([0-9]{15,20})>$", argument)
-
-        if match:
+        if match := re.match(
+            r"<(a?):([a-zA-Z0-9\_]{1,32}):([0-9]{15,20})>$", argument
+        ):
             emoji_animated = bool(match.group(1))
             emoji_name = match.group(2)
             emoji_id = int(match.group(3))
@@ -953,8 +952,7 @@ class clean_content(Converter[str]):
         def repl(match: re.Match) -> str:
             type = match[1]
             id = int(match[2])
-            transformed = transforms[type](id)
-            return transformed
+            return transforms[type](id)
 
         result = re.sub(r"<(@[!&]?|#)([0-9]{15,20})>", repl, argument)
         if self.escape_markdown:

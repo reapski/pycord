@@ -347,15 +347,11 @@ class GuildChannel:
         except KeyError:
             if parent_id is not _undefined:
                 if lock_permissions:
-                    category = self.guild.get_channel(parent_id)
-                    if category:
+                    if category := self.guild.get_channel(parent_id):
                         options["permission_overwrites"] = [c._asdict() for c in category._overwrites]
                 options["parent_id"] = parent_id
             elif lock_permissions and self.category_id is not None:
-                # if we're syncing permissions on a pre-existing channel category without changing it
-                # we need to update the permissions to point to the pre-existing category
-                category = self.guild.get_channel(self.category_id)
-                if category:
+                if category := self.guild.get_channel(self.category_id):
                     options["permission_overwrites"] = [c._asdict() for c in category._overwrites]
         else:
             await self._move(
@@ -415,9 +411,7 @@ class GuildChannel:
                 # swap it to be the first one.
                 everyone_index = index
 
-        # do the swap
-        tmp = self._overwrites
-        if tmp:
+        if tmp := self._overwrites:
             tmp[everyone_index], tmp[0] = tmp[0], tmp[everyone_index]
 
     @property

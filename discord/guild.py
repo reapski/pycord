@@ -863,10 +863,14 @@ class Guild(Hashable):
 
         .. versionadded:: 1.6
         """
-        for role in self._roles.values():
-            if role.is_premium_subscriber():
-                return role
-        return None
+        return next(
+            (
+                role
+                for role in self._roles.values()
+                if role.is_premium_subscriber()
+            ),
+            None,
+        )
 
     @property
     def self_role(self) -> Optional[Role]:

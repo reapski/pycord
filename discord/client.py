@@ -293,9 +293,7 @@ class Client:
 
         .. versionadded:: 1.6
         """
-        if self.ws:
-            return self.ws.is_ratelimited()
-        return False
+        return self.ws.is_ratelimited() if self.ws else False
 
     @property
     def user(self) -> Optional[ClientUser]:
@@ -403,8 +401,7 @@ class Client:
         _log.debug("Dispatching event %s", event)
         method = f"on_{event}"
 
-        listeners = self._listeners.get(event)
-        if listeners:
+        if listeners := self._listeners.get(event):
             removed = []
             for i, (future, condition) in enumerate(listeners):
                 if future.cancelled():
@@ -418,7 +415,7 @@ class Client:
                     removed.append(i)
                 else:
                     if result:
-                        if len(args) == 0:
+                        if not args:
                             future.set_result(None)
                         elif len(args) == 1:
                             future.set_result(args[0])
@@ -1680,8 +1677,7 @@ class Client:
             The channel that was created.
         """
         state = self._connection
-        found = state._get_private_channel_by_user(user.id)
-        if found:
+        if found := state._get_private_channel_by_user(user.id):
             return found
 
         data = await state.http.start_private_message(user.id)
